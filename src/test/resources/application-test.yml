@@ -1,0 +1,26 @@
+spring:
+  data:
+    redis:
+      timeout: 1s
+      connect-timeout: 5s
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    defer-datasource-initialization: true
+
+  test:
+    database:
+      replace: none
+
+logging:
+  level:
+    org.springframework.data.redis: debug
+    org.springframework: warn
+    org.hibernate.sql: debug

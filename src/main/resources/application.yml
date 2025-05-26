@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testbase
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  data:
+    redis:
+      host: host.docker.internal
+      port: 6379
+      timeout: 1s
+      connect-timeout: 5s
+logging:
+  level:
+    org:
+      springframework:
+        boot.autoconfigure: ERROR
+        jdbc: DEBUG
+      hibernate:
+        SQL: DEBUG
+        type.descriptor.sql.BasicBinder: TRACE
+debug: true
+
+jwt:
+  secret: c1bbad5df3ce0d5d894b6b4f3a558c9c8accb7dc98dce72cfe3f55efc4cde3a5c837664dc101b11505380136e1312ca49c978310cd3579b99be460d5858a08da958f9594c06fdc7281a816bf77d7d18d1e5f3eba173cb5fe20b23c352249bdaaa21853c9bdf0e6b25ba888d5260efdcc097675b78a873b371a4e6276c8bd009d68cf6cf77cc93b2732336cfdf7bd4278cf24942cf99ed9de94df813af5c19299369724ff58a2757ea564e5566b155dec8826ba5fe73c8e6a4b3f42a86b447b32fd3951feae18bb4104f5f48bbc5f4433498f74ec0aec0202e34b9febf0e1f001d42be01d0822cc5e368dcc45c1bccacbf549743973d6ce03caee0caa6edb5b17
+  expirationAccessToken: 900000
+  expirationRefreshToken: 604800000
+
