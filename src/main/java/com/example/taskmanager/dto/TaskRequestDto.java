@@ -18,7 +18,7 @@ public class TaskRequestDto {
     @NotBlank(message = "Description cannot be empty")
     String description;
 
-    @NotBlank(message = "Status cannot be empty")
+    @NotNull(message = "Status cannot be empty")
     TaskStatus status;
 
     @NotNull

@@ -8,10 +8,7 @@ import com.example.taskmanager.service.TokenBlacklistService;
 import com.example.taskmanager.service.UserDetailsServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.AuthResponse;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,10 +40,14 @@ public class AuthControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Container
-    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17-alpine")
+    private static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17-alpine")
             .withDatabaseName("testDb")
             .withUsername("test")
             .withPassword("test");
+
+    @Container
+    private static final GenericContainer<?> redisContainer = new GenericContainer<>("redis:8-alpine")
+            .withExposedPorts(6379);
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
@@ -53,12 +55,16 @@ public class AuthControllerIntegrationTest {
         registry.add("spring.datasource.username", postgresContainer::getUsername);
         registry.add("spring.datasource.password", postgresContainer::getPassword);
         registry.add("spring.datasource.driver-class-name", postgresContainer::getDriverClassName);
+
+        registry.add("spring.data.redis.host", redisContainer::getHost);
+        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
     }
+
 
     @Test
     @Order(1)
     void login_ShouldLoginSuccessfullyAndSetRefreshTokenCookie() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "user123");
+        var loginRequest = new AuthenticationRequest("test user", "user123");
 
         mvc.perform(
                 post("/api/auth/login")
@@ -73,7 +79,7 @@ public class AuthControllerIntegrationTest {
     @Test
     @Order(2)
     void login_ShouldReturn401_WhenWrongPassword() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "wrongPassword");
+        var loginRequest = new AuthenticationRequest("test user", "wrongPassword");
 
         mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +90,7 @@ public class AuthControllerIntegrationTest {
     @Test
     @Order(3)
     void refresh_ShouldRefreshAccessToken_WhenRefreshTokenIsValid() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "user123");
+        var loginRequest = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")
@@ -122,7 +128,7 @@ public class AuthControllerIntegrationTest {
     @Test
     @Order(5)
     void refresh_ShouldReturn401_WhenRefreshTokenIsMismatched() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "user123");
+        var loginRequest = new AuthenticationRequest("test user", "user123");
 
         mvc.perform(
                 post("/api/auth/login")
@@ -143,7 +149,7 @@ public class AuthControllerIntegrationTest {
     @Test
     @Order(6)
     void logout_ShouldLogoutSuccessfully() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "user123");
+        var loginRequest = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")
@@ -164,7 +170,7 @@ public class AuthControllerIntegrationTest {
     @Test
     @Order(7)
     void refresh_ShouldReturn401_WhenUserTriesRefreshAccessTokenByOldRefreshTokenAfterLogout() throws Exception {
-        var loginRequest = new AuthenticationRequest("john", "user123");
+        var loginRequest = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")

@@ -2,11 +2,8 @@ server:
   port: 8080
 
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/testbase
-    username: postgres
-    password: root
-    driver-class-name: org.postgresql.Driver
+  profiles:
+    active: docker
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,8 +13,6 @@ spring:
     show-sql: true
   data:
     redis:
-      host: host.docker.internal
-      port: 6379
       timeout: 1s
       connect-timeout: 5s
 logging:
