@@ -5,7 +5,6 @@ import com.example.taskmanager.dto.AuthenticationResponse;
 import com.example.taskmanager.dto.UserRequestDto;
 import com.example.taskmanager.entity.User;
 import com.example.taskmanager.repository.UserRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -35,21 +35,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserControllerIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:17-alpine")
-            .withDatabaseName("test-db")
+    private static final GenericContainer<?> redisContainer = new GenericContainer<>("redis:8-alpine")
+            .withExposedPorts(6379);
+
+    @Container
+    private static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17-alpine")
+            .withDatabaseName("testDb")
             .withUsername("test")
             .withPassword("test");
 
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redisContainer::getHost);
+        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
+
+        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", postgresContainer::getUsername);
+        registry.add("spring.datasource.password", postgresContainer::getPassword);
+        registry.add("spring.datasource.driver-class-name", postgresContainer::getDriverClassName);
+    }
+
     @Autowired
     private UserRepository userRepository;
-
-    @DynamicPropertySource
-    static void setProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
-        registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
-        registry.add("spring.datasource.driver-class-name", postgreSQLContainer::getDriverClassName);
-    }
 
     @BeforeEach
     void checkUsers() {
@@ -88,7 +95,7 @@ public class UserControllerIntegrationTest {
                 get("/users/1")
                         .header(HttpHeaders.AUTHORIZATION, getAdminJwt()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("john"));
+                .andExpect(jsonPath("$.username").value("test user"));
     }
 
     @Test
@@ -165,7 +172,7 @@ public class UserControllerIntegrationTest {
     }
 
     private String getAdminJwt() throws Exception {
-        var login = new AuthenticationRequest("alice", "admin123");
+        var login = new AuthenticationRequest("test admin", "admin123");
 
         var result = mvc.perform(
                 post("/api/auth/login")
@@ -182,7 +189,7 @@ public class UserControllerIntegrationTest {
     }
 
     private String getUserJwt() throws Exception {
-        var login = new AuthenticationRequest("john", "user123");
+        var login = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")

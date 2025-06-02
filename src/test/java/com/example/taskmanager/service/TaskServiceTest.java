@@ -221,7 +221,7 @@ public class TaskServiceTest {
         assertEquals(taskResponseDto.getStatus(), result.getStatus());
 
 
-        Mockito.verify(userRepository, Mockito.times(1)).findByUsername(USERNAME);
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
         Mockito.verify(taskRepository, Mockito.times(1)).save(newTask);
         Mockito.verify(taskMapper, Mockito.times(1)).mapToEntity(taskRequestDto);
         Mockito.verify(taskMapper, Mockito.times(1)).mapToDto(newTask);
@@ -239,7 +239,7 @@ public class TaskServiceTest {
     @Test
     void create_ShouldThrowException_WhenUserNotFound() {
         //arrange
-        Mockito.when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         //act & assert
         assertThrows(UserNotFoundException.class, () -> taskService.create(taskRequestDto));

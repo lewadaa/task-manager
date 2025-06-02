@@ -6,6 +6,7 @@ import com.example.taskmanager.entity.RoleType;
 import com.example.taskmanager.entity.User;
 import com.example.taskmanager.exception.UserNotFoundException;
 import com.example.taskmanager.mapper.UserMapper;
+import com.example.taskmanager.repository.TaskRepository;
 import com.example.taskmanager.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,9 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    TaskRepository taskRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

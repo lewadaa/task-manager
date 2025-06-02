@@ -1,6 +1,5 @@
 package com.example.taskmanager.integration;
 
-import com.example.taskmanager.controller.TaskController;
 import com.example.taskmanager.dto.AuthenticationRequest;
 import com.example.taskmanager.dto.AuthenticationResponse;
 import com.example.taskmanager.dto.TaskRequestDto;
@@ -29,12 +28,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.crypto.SecretKey;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
@@ -53,22 +52,31 @@ public class TaskControllerIntegrationTest {
     String secret;
 
     @Container
-    static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:17-alpine")
+    private static final GenericContainer<?> redisContainer = new GenericContainer<>("redis:8-alpine")
+            .withExposedPorts(6379);
+
+    @Container
+    private static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:17-alpine")
             .withDatabaseName("testDb")
             .withUsername("test")
             .withPassword("test");
-    @Autowired
-    private UserDetailsServiceImpl userDetailsServiceImpl;
-    @Autowired
-    private TokenBlacklistService tokenBlacklistService;
 
     @DynamicPropertySource
-    static void setProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
-        registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
-        registry.add("spring.datasource.driver-class-name", postgreSQLContainer::getDriverClassName);
+    static void properties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redisContainer::getHost);
+        registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
+
+        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", postgresContainer::getUsername);
+        registry.add("spring.datasource.password", postgresContainer::getPassword);
+        registry.add("spring.datasource.driver-class-name", postgresContainer::getDriverClassName);
     }
+
+    @Autowired
+    private UserDetailsServiceImpl userDetailsServiceImpl;
+
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
 
     @Autowired
     private UserRepository userRepository;
@@ -145,7 +153,7 @@ public class TaskControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(request.getTitle()))
-                .andExpect(jsonPath("$.user.username").value("john"));
+                .andExpect(jsonPath("$.user.username").value("test user"));
     }
 
     @Test
@@ -244,7 +252,7 @@ public class TaskControllerIntegrationTest {
     @Test
     @Order(13)
     void shouldRefreshAccessToken_WhenAccessTokenIsExpired_AndRefreshTokenIsValid() throws Exception {
-        var login = new AuthenticationRequest("john", "user123");
+        var login = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")
@@ -253,7 +261,7 @@ public class TaskControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        var userDetails = userDetailsServiceImpl.loadUserByUsername("john");
+        var userDetails = userDetailsServiceImpl.loadUserByUsername("test user");
         var expiredAccessToken = generateExpiredAccessToken(userDetails);
         var setCookieHeader = result.getResponse().getHeader("Set-Cookie");
         var refreshToken = parseRefreshTokenFromSetCookie(setCookieHeader);
@@ -298,7 +306,7 @@ public class TaskControllerIntegrationTest {
     }
 
     private String getAdminJwt() throws Exception {
-        var login = new AuthenticationRequest("alice", "admin123");
+        var login = new AuthenticationRequest("test admin", "admin123");
 
         var result = mvc.perform(
                         post("/api/auth/login")
@@ -315,7 +323,7 @@ public class TaskControllerIntegrationTest {
     }
 
     private String getUserJwt() throws Exception {
-        var login = new AuthenticationRequest("john", "user123");
+        var login = new AuthenticationRequest("test user", "user123");
 
         var result = mvc.perform(
                         post("/api/auth/login")

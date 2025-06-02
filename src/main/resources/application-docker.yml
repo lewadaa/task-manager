@@ -1,0 +1,16 @@
+spring:
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+  jpa:
+    defer-datasource-initialization: true
+  datasource:
+    url: jdbc:postgresql://postgres:5432/testbase
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: redis
+      port: 6379
