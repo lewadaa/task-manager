@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -37,9 +38,13 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PageResponse<UserResponseDto>> getAllUsers(
-            @PageableDefault(size = 10, sort = "username", direction = Sort.Direction.ASC) Pageable pageable
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        return ResponseEntity.ok(PageResponse.of(userService.findAll(pageable)));
+
+        Sort forcedSort = Sort.by(Sort.Direction.ASC, "username");
+        Pageable forcedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), forcedSort);
+
+        return ResponseEntity.ok(PageResponse.of(userService.findAll(forcedPageable)));
     }
 
     @Operation(
