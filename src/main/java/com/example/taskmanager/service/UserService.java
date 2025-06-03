@@ -10,6 +10,8 @@ import com.example.taskmanager.repository.TaskRepository;
 import com.example.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +34,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TaskRepository taskRepository;
 
-    public List<UserResponseDto> findAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::mapToDto).toList();
+    public Page<UserResponseDto> findAll(Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
+
+        return users.map(userMapper::mapToDto);
     }
 
     public UserResponseDto findById(Long id) {
