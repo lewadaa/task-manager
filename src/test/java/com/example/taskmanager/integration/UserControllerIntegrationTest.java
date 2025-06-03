@@ -85,7 +85,7 @@ public class UserControllerIntegrationTest {
                 get("/users")
                         .header(HttpHeaders.AUTHORIZATION, getAdminJwt()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].username").exists());
+                .andExpect(jsonPath("$.content.[0].username").exists());
     }
 
     @Test

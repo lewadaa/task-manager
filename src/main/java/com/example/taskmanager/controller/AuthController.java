@@ -3,6 +3,8 @@ package com.example.taskmanager.controller;
 import com.example.taskmanager.dto.*;
 import com.example.taskmanager.security.JwtService;
 import com.example.taskmanager.service.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Контроллер аутентификации", description = "Вход, выход и обновление токена")
 public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
@@ -26,6 +29,9 @@ public class AuthController {
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final CookieService cookieService;
 
+    @Operation(
+            summary = "Логин"
+    )
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest,
                                    HttpServletResponse response) {
@@ -43,6 +49,9 @@ public class AuthController {
         return ResponseEntity.ok(new AuthenticationResponse(accessToken, null));
     }
 
+    @Operation(
+            summary = "Выход"
+    )
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader,
                                     HttpServletResponse response) {
@@ -60,6 +69,9 @@ public class AuthController {
         return ResponseEntity.ok("Logout successful");
     }
 
+    @Operation(
+            summary = "Обновить jwt токен"
+    )
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.refreshToken();
