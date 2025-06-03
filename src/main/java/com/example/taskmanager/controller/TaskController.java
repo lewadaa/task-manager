@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -42,9 +43,13 @@ public class TaskController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PageResponse<TaskResponseDto>> getTasksByStatus(
             @RequestParam TaskStatus status,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
+            @PageableDefault(size = 10) Pageable pageable,
             Principal principal) {
-        return ResponseEntity.ok(PageResponse.of(taskService.findByStatus(status, principal.getName(), pageable)));
+
+        Sort forcedSort = Sort.by(Sort.Direction.ASC, "createdAt");
+        Pageable forcedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), forcedSort);
+
+        return ResponseEntity.ok(PageResponse.of(taskService.findByStatus(status, principal.getName(), forcedPageable)));
     }
 
     @Operation(
@@ -55,8 +60,12 @@ public class TaskController {
     @GetMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PageResponse<TaskResponseDto>> getAllTasks(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
-        return ResponseEntity.ok(PageResponse.of(taskService.findTasksForCurrentUser(pageable)));
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Sort forcedSort = Sort.by(Sort.Direction.ASC, "createdAt");
+        Pageable forcedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), forcedSort);
+
+        return ResponseEntity.ok(PageResponse.of(taskService.findTasksForCurrentUser(forcedPageable)));
     }
 
     @Operation(
