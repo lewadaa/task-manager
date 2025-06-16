@@ -1,9 +1,9 @@
-# Maven / Gradle build
+# Maven / Gradle build #
 target/
 build/
 
 
-# Maven wrapper
+# Maven wrapper #
 !.mvn/wrapper/maven-wrapper.jar
 
 ### IDE settings ###
@@ -21,6 +21,9 @@ build/
 *.iml
 *.ipr
 
+### Environment files ###
+.env
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -31,7 +34,7 @@ build/
 ### VS Code ###
 .vscode/
 
-# Log file
+# Log file #
 *.log
 
 # Java build artifacts #
@@ -44,9 +47,9 @@ build/
 *.tar.gz
 *.rar
 
-# virtual machine crash logs
+# virtual machine crash logs #
 hs_err_pid*
 replay_pid*
 
-# Docs
+# Docs #
 HELP.md

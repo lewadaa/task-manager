@@ -39,7 +39,9 @@ public class JwtServiceTest  {
         ReflectionTestUtils.setField(jwtService, "accessTokenExpirationTime", 3600000L);
         ReflectionTestUtils.setField(jwtService, "refreshTokenExpirationTime", 7200000L );
 
-        jwtService.init();
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+        ReflectionTestUtils.setField(jwtService, "key", key);
     }
 
     @Test

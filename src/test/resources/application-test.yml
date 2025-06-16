@@ -27,3 +27,8 @@ logging:
     org.springframework.data.redis: debug
     org.springframework: warn
     org.hibernate.sql: debug
+
+jwt:
+  secret: bXktc2FmZS10ZXN0LXNlY3JldC1mb3ItanVuaXQtdGVzdHM=
+  expirationAccessToken: 900000
+  expirationRefreshToken: 604800000
