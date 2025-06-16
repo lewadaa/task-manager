@@ -19,6 +19,9 @@ spring:
     database:
       replace: none
 
+  flyway:
+    enabled: false
+
 logging:
   level:
     org.springframework.data.redis: debug
