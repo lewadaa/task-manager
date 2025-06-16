@@ -4,8 +4,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +26,16 @@ public class JwtService {
 
     private SecretKey key;
 
-    @PostConstruct
-    public void init() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        key = Keys.hmacShaKeyFor(keyBytes);
+    public SecretKey getKey() {
+        if (key == null) {
+            try {
+                byte[] keyBytes = Decoders.BASE64.decode(secret);
+                key = Keys.hmacShaKeyFor(keyBytes);
+            } catch (IllegalArgumentException e) {
+                throw new BadCredentialsException("Invalid key");
+            }
+        }
+        return key;
     }
 
     public String generateAccessToken(UserDetails userDetails) {
@@ -41,7 +47,7 @@ public class JwtService {
                 .claim("roles", userDetails.getAuthorities())
                 .issuedAt(now)
                 .expiration(expiration)
-                .signWith(key)
+                .signWith(getKey())
                 .compact();
     }
 
@@ -53,13 +59,13 @@ public class JwtService {
                 .subject(userDetails.getUsername())
                 .issuedAt(now)
                 .expiration(expiration)
-                .signWith(key)
+                .signWith(getKey())
                 .compact();
     }
 
     public String extractUsername(String token) {
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(getKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -74,7 +80,7 @@ public class JwtService {
     public boolean isTokenExpired(String token) {
         try {
             Date expiration = Jwts.parser()
-                    .verifyWith(key)
+                    .verifyWith(getKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()

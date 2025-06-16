@@ -6,8 +6,8 @@ spring:
     defer-datasource-initialization: false
   datasource:
     url: jdbc:postgresql://postgres:5432/tm-base
-    username: postgres
-    password: root
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:root}
     driver-class-name: org.postgresql.Driver
   data:
     redis:
