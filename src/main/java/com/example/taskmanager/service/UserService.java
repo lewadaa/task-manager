@@ -9,6 +9,8 @@ import com.example.taskmanager.mapper.UserMapper;
 import com.example.taskmanager.repository.TaskRepository;
 import com.example.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,18 +31,24 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final TaskRepository taskRepository;
 
     public Page<UserResponseDto> findAll(Pageable pageable) {
+        logger.debug("Поиск всех пользователей");
+
         Page<User> users = userRepository.findAll(pageable);
 
         return users.map(userMapper::mapToDto);
     }
 
     public UserResponseDto findById(Long id) {
+        logger.debug("Поиск пользователя по id={}", id);
+
         return userRepository.findById(id)
                 .map(userMapper::mapToDto)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
@@ -48,6 +56,8 @@ public class UserService {
 
     @Transactional
     public UserResponseDto create(UserRequestDto userRequestDto) {
+        logger.info("Создание нового пользователя: {}", userRequestDto.getUsername());
+
         if (userRepository.existsByUsername(userRequestDto.getUsername())) {
             throw new RuntimeException("Username " + userRequestDto.getUsername() + " already exists");
         }
@@ -64,6 +74,8 @@ public class UserService {
 
     @Transactional
     public UserResponseDto update(Long id, UserRequestDto userRequestDto) {
+        logger.info("Обновление пользователя с id={}", userRequestDto.getUsername());
+
         var existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
 
@@ -93,6 +105,8 @@ public class UserService {
 
     @Transactional
     public void delete(Long id) {
+        logger.info("Удаление пользователя с id={}", id);
+
         taskRepository.deleteByUserId(id);
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));

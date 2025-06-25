@@ -3,6 +3,8 @@ package com.example.taskmanager.service;
 import com.example.taskmanager.entity.User;
 import com.example.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,13 +17,22 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
+
     private final UserRepository userRepository;
 
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        logger.debug("Загрузка пользователя по имени: {}", username);
+
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+                .orElseThrow(() -> {
+                    logger.warn("Пользователь с именем '{}' не найден", username);
+                    return new UsernameNotFoundException(username);
+                });
+
+        logger.debug("Пользователь '{}' успешно загружен с ролью {}", username, user.getRole());
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())

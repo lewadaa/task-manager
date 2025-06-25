@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Контроллер аутентификации", description = "Вход, выход и обновление токена")
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     private final UserService userService;
     private final JwtService jwtService;
     private final TokenBlacklistService tokenBlacklistService;
@@ -35,6 +39,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest authenticationRequest,
                                    HttpServletResponse response) {
+        logger.info("Попытка входа пользователя: {}", authenticationRequest.getUsername());
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(),
                         authenticationRequest.getPassword())
@@ -57,6 +63,8 @@ public class AuthController {
                                     HttpServletResponse response) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+
+            logger.info("Выход пользователя с токеном: {}", token);
 
             tokenBlacklistService.blacklistToken(token, 15 * 60 * 1000);
 
@@ -94,6 +102,8 @@ public class AuthController {
         refreshTokenService.deleteRefreshToken(username);
 
         refreshTokenService.storeRefreshToken(username, newRefreshToken, 604800000L);
+
+        logger.debug("Обновление токена для пользователя: {}", username);
 
         return ResponseEntity.ok(new AuthenticationResponse(newAccessToken, newRefreshToken));
 

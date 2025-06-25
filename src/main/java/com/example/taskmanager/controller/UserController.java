@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -17,6 +19,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +31,8 @@ import java.util.List;
 @Validated
 @Tag(name = "Пользователи", description = "Взаимодействие с пользователями")
 public class UserController {
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     private final UserService userService;
 
     @Operation(
@@ -40,6 +45,7 @@ public class UserController {
     public ResponseEntity<PageResponse<UserResponseDto>> getAllUsers(
             @PageableDefault(size = 10) Pageable pageable
     ) {
+        logger.info("получение всех задач админом '{}'", getCurrentUserName());
 
         Sort forcedSort = Sort.by(Sort.Direction.ASC, "username");
         Pageable forcedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), forcedSort);
@@ -55,6 +61,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable @Min(1) Long id) {
+        logger.info("Получение админом '{}' пользователя с id={}", getCurrentUserName(), id);
+
         return ResponseEntity.ok(userService.findById(id));
     }
 
@@ -66,6 +74,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
+        logger.info("Создание нового пользователя '{}' админом '{}'", userRequestDto.getUsername(), getCurrentUserName());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(userRequestDto));
     }
 
@@ -78,6 +88,8 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable @Min(1) Long id,
                                                       @Valid @RequestBody UserRequestDto userRequestDto) {
+        logger.info("Обновление пользователя '{}' админом '{}'", userRequestDto.getUsername(), getCurrentUserName());
+
         return ResponseEntity.ok(userService.update(id, userRequestDto));
     }
 
@@ -89,7 +101,13 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteUser(@PathVariable @Min(1) Long id) {
+        logger.info("Удаление пользователя с id={} админом '{}'", id, getCurrentUserName());
+
         userService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private String getCurrentUserName() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

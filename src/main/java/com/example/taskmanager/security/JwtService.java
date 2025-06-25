@@ -4,6 +4,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +16,8 @@ import java.util.Date;
 
 @Service
 public class JwtService {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
     @Value("${jwt.secret}")
     private String secret;
@@ -31,7 +35,9 @@ public class JwtService {
             try {
                 byte[] keyBytes = Decoders.BASE64.decode(secret);
                 key = Keys.hmacShaKeyFor(keyBytes);
+                logger.info("JWT ключ успешно инициализирован");
             } catch (IllegalArgumentException e) {
+                logger.error("Ошибка при инициализации JWT ключа", e);
                 throw new BadCredentialsException("Invalid key");
             }
         }
@@ -39,6 +45,8 @@ public class JwtService {
     }
 
     public String generateAccessToken(UserDetails userDetails) {
+        logger.debug("Генерация access токена для пользователя {}", userDetails.getUsername());
+
         Date now = new Date();
         Date expiration = new Date(now.getTime() + accessTokenExpirationTime);
 
@@ -52,6 +60,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
+        logger.debug("Генерация refresh токена для пользователя {}", userDetails.getUsername());
         Date now = new Date();
         Date expiration = new Date(now.getTime() + refreshTokenExpirationTime);
 
@@ -73,6 +82,7 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, String username) {
+        logger.debug("Проверка валидности токена для пользователя {}", username);
         String extractedUsername = extractUsername(token);
         return extractedUsername.equals(username) && !isTokenExpired(token);
     }
@@ -87,6 +97,7 @@ public class JwtService {
                     .getExpiration();
             return expiration.before(new Date());
         } catch (ExpiredJwtException e) {
+            logger.warn("Токен просрочен: {}", e.getMessage());
             return true;
         }
 
