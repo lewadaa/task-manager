@@ -10,6 +10,8 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +27,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
+
     private final JwtService jwtService;
     private final TokenBlacklistService tokenBlacklistService;
     private final UserDetailsServiceImpl userDetailsService;
@@ -33,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        System.out.println("🔒 JWT filter triggered for: " + request.getRequestURI());
+        logger.debug("🔒 JWT filter triggered for: {}", request.getRequestURI());
         String path = request.getRequestURI();
         if (path.startsWith("/api/auth")
                 || path.startsWith("/v3/api-docs")

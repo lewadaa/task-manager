@@ -21,14 +21,18 @@ spring:
       timeout: 1s
       connect-timeout: 5s
 logging:
+  file:
+    path: logs
   level:
-    org:
-      springframework:
-        boot.autoconfigure: ERROR
-        jdbc: DEBUG
-      hibernate:
-        SQL: DEBUG
-        type.descriptor.sql.BasicBinder: TRACE
+    root: info
+#    org:
+#      springframework:
+#        boot.autoconfigure: ERROR
+#        jdbc: DEBUG
+#      hibernate:
+#        SQL: DEBUG
+#        type.descriptor.sql.BasicBinder: TRACE
+
 debug: true
 
 jwt:
